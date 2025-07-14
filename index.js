@@ -22,7 +22,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        
+
         await client.connect();
         app.get('/', (req, res) => {
             res.send('Hello World!')
@@ -55,11 +55,20 @@ async function run() {
                 return res.status(200).send({ message: 'User already exists', inserted: false });
             }
 
-           
+
             const user = req.body;
             const result = await userCollection.insertOne(user);
             res.send(result);
         });
+    
+        app.get('/users', async (req, res) => {
+            const email = req.query.email;
+            if (!email) return res.status(400).send('Email required');
+
+            const user = await userCollection.findOne({ email });
+            res.send(user);
+        });
+
 
 
     } finally {
