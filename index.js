@@ -28,6 +28,15 @@ async function run() {
             res.send('Hello World!')
         })
 
+        const userCollection = client.db('courcesDB').collection('users')
+
+        app.get('/users', async (req, res) => {
+
+            const allUsers = await userCollection.find({}).toArray();
+
+            res.status(200).send(allUsers);
+
+        });
 
 
     } finally {
