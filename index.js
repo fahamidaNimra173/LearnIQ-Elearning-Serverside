@@ -30,13 +30,22 @@ async function run() {
 
         const userCollection = client.db('courcesDB').collection('users')
 
+       
         app.get('/users', async (req, res) => {
+            const email = req.query.email;
 
+            if (email) {
+                // Find specific user by email
+                const user = await userCollection.findOne({ email });
+                if (!user) return res.status(404).send('User not found');
+                return res.send(user);
+            }
+
+            // If no email is provided, return all users
             const allUsers = await userCollection.find({}).toArray();
-
             res.status(200).send(allUsers);
-
         });
+
 
         app.post('/users', async (req, res) => {
             const userCollection = client.db('courcesDB').collection('users');
@@ -60,14 +69,19 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result);
         });
-    
+
         app.get('/users', async (req, res) => {
             const email = req.query.email;
             if (!email) return res.status(400).send('Email required');
+            const query = {
+                userEmail: email
+            }
+            const user = await userCollection.findOne(query);
+            if (!user) return res.status(404).send('User not found');
 
-            const user = await userCollection.findOne({ email });
             res.send(user);
         });
+
 
 
 
