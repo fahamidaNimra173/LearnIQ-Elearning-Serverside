@@ -22,7 +22,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        // Connect the client to the server	(optional starting in v4.7)
+        
         await client.connect();
         app.get('/', (req, res) => {
             res.send('Hello World!')
@@ -36,6 +36,29 @@ async function run() {
 
             res.status(200).send(allUsers);
 
+        });
+
+        app.post('/users', async (req, res) => {
+            const userCollection = client.db('courcesDB').collection('users');
+
+            const email = req.body.email;
+
+            // Check if user already exists
+            const userExists = await userCollection.findOne({ email });
+            if (userExists) {
+                //  update lastLogin of user
+                await userCollection.updateOne(
+                    { email },
+                    { $set: { lastLogin: req.body.lastLogin || new Date().toISOString() } }
+                );
+
+                return res.status(200).send({ message: 'User already exists', inserted: false });
+            }
+
+           
+            const user = req.body;
+            const result = await userCollection.insertOne(user);
+            res.send(result);
         });
 
 
