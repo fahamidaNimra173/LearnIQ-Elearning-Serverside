@@ -29,8 +29,8 @@ async function run() {
         })
 
         const userCollection = client.db('courcesDB').collection('users')
+        const teacherCollection = client.db('courcesDB').collection('teachers')
 
-       
         app.get('/users', async (req, res) => {
             const email = req.query.email;
 
@@ -52,7 +52,7 @@ async function run() {
 
             const email = req.body.email;
 
-            // Check if user already exists
+
             const userExists = await userCollection.findOne({ email });
             if (userExists) {
                 //  update lastLogin of user
@@ -81,8 +81,17 @@ async function run() {
 
             res.send(user);
         });
+        app.post('/teacher-request', async (req, res) => {
+            const teacher = req.body;
+            const result = await teacherCollection.insertOne(teacher);
+            res.send(result)
+        })
 
-
+        app.get('/teacher-request', async (req, res) => {
+        
+            const result = await teacherCollection.find({}).toArray();
+            res.send(result)
+        })
 
 
     } finally {
