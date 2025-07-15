@@ -88,10 +88,13 @@ async function run() {
         })
 
         app.get('/teacher-request', async (req, res) => {
-            const query={};
-            query={
+            var query={};
+            if(req.query.email){
+                 query={
                 email:req.query.email
             }
+            }
+           
             const result = await teacherCollection.find(query).toArray();
             res.send(result)
         })
