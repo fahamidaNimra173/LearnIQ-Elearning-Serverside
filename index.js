@@ -136,6 +136,7 @@ async function run() {
             const result = await courcesCollection.find({}).toArray();
             res.send(result);
         });
+        // update cources status to approve
         app.patch('/cources/approve/:id', async (req, res) => {
             const id = req.params.id;
 
@@ -150,6 +151,21 @@ async function run() {
             }
         });
 
+
+         // update cources status to reject
+        app.patch('/cources/reject/:id', async (req, res) => {
+            const id = req.params.id;
+
+            try {
+                const result = await courcesCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: { status: 'rejected' } }
+                );
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ error: 'Failed to reject class.' });
+            }
+        });
 
     } finally {
 
