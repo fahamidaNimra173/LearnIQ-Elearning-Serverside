@@ -4,7 +4,7 @@ const app = express()
 const cors = require('cors')
 const port = process.env.PORT || 5000
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 app.use(cors());
 app.use(express.json())
 
@@ -88,16 +88,34 @@ async function run() {
         })
 
         app.get('/teacher-request', async (req, res) => {
-            var query={};
-            if(req.query.email){
-                 query={
-                email:req.query.email
+            var query = {};
+            if (req.query.email) {
+                query = {
+                    email: req.query.email
+                }
             }
-            }
-           
+
             const result = await teacherCollection.find(query).toArray();
             res.send(result)
         })
+
+        //  Approve request and update user role
+        app.patch('/teacher-request/approve/:id', async (req, res) => {
+            const id = req.params.id;
+            const teacherResult = await teacherCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: { status: 'accepted' } }
+            );
+
+            const teacher = await teacherCollection.findOne({ _id: new ObjectId(id) });
+            const userUpdate = await userCollection.updateOne(
+                { email: teacher.email },
+                { $set: { role: 'teacher' } }
+            );
+
+            res.send({ teacher, userUpdate });
+        });
+
 
 
     } finally {
