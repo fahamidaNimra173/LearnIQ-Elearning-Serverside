@@ -132,9 +132,22 @@ async function run() {
             res.send(result);
         });
         app.get('/cources', async (req, res) => {
-            
+
             const result = await courcesCollection.find({}).toArray();
             res.send(result);
+        });
+        app.patch('/cources/approve/:id', async (req, res) => {
+            const id = req.params.id;
+
+            try {
+                const result = await courcesCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: { status: 'approved' } }
+                );
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ error: 'Failed to approve class.' });
+            }
         });
 
 
