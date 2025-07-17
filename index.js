@@ -30,7 +30,7 @@ async function run() {
 
         const userCollection = client.db('courcesDB').collection('users')
         const teacherCollection = client.db('courcesDB').collection('teachers')
-
+        const courcesCollection = client.db('courcesDB').collection('cources');
         app.get('/users', async (req, res) => {
             const email = req.query.email;
 
@@ -99,7 +99,7 @@ async function run() {
             res.send(result)
         })
 
-        //  Approve request and update user role
+        //  Approve request and update user role to teacher
         app.patch('/teacher-request/approve/:id', async (req, res) => {
             const id = req.params.id;
             const teacherResult = await teacherCollection.updateOne(
@@ -125,7 +125,17 @@ async function run() {
             );
             res.send(result);
         });
-
+        // Add cources from teacher
+        app.post('/cources', async (req, res) => {
+            const newClass = req.body;
+            const result = await courcesCollection.insertOne(newClass);
+            res.send(result);
+        });
+        app.get('/cources', async (req, res) => {
+            
+            const result = await courcesCollection.find({}).toArray();
+            res.send(result);
+        });
 
 
     } finally {
