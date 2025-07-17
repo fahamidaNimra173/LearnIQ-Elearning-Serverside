@@ -116,6 +116,16 @@ async function run() {
             res.send({ teacher, userUpdate });
         });
 
+        //  Reject request
+        app.patch('/teacher-request/reject/:id', async (req, res) => {
+            const id = req.params.id;
+            const result = await teacherCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: { status: 'rejected' } }
+            );
+            res.send(result);
+        });
+
 
 
     } finally {
