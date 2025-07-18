@@ -132,10 +132,22 @@ async function run() {
             res.send(result);
         });
         app.get('/cources', async (req, res) => {
+            const status = req.query.status;
+            const query = status ? { status } : {};
 
-            const result = await courcesCollection.find({}).toArray();
+            const result = await courcesCollection.find(query).toArray();
             res.send(result);
         });
+        app.get('/cources/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                _id: new ObjectId(id)
+            }
+
+            const result = await courcesCollection.findOne(query);
+            res.send(result);
+        });
+
         // update cources status to approve
         app.patch('/cources/approve/:id', async (req, res) => {
             const id = req.params.id;
@@ -152,7 +164,7 @@ async function run() {
         });
 
 
-         // update cources status to reject
+        // update cources status to reject
         app.patch('/cources/reject/:id', async (req, res) => {
             const id = req.params.id;
 
