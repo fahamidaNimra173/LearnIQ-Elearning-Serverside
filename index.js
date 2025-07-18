@@ -148,6 +148,23 @@ async function run() {
             res.send(result);
         });
 
+        app.delete('/cources/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                _id: new ObjectId(id)
+            }
+
+            const result = await courcesCollection.deleteOne(query);
+            res.send(result);
+        });
+        app.get('/cources/:email', async (req, res) => {
+            const email = req.params.email;
+
+
+            const result = await courcesCollection.find(email).toArray();
+            res.send(result);
+        });
+
         // update cources status to approve
         app.patch('/cources/approve/:id', async (req, res) => {
             const id = req.params.id;
