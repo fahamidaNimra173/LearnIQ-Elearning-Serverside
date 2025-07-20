@@ -219,7 +219,20 @@ async function run() {
                 res.status(500).send({ error: 'Failed to reject class.' });
             }
         });
+        //updated total enrollment(increased by 1 on every enrollment of student) 
+        app.patch('/cources/:id/increment-enroll', async (req, res) => {
+            const courseId = req.params.id;
+            const result = await courcesCollection.updateOne(
+                { _id: new ObjectId(courseId) },
+                { $inc: { totalEnroll: 1 } }
+            );
 
+            if (result.modifiedCount > 0) {
+                res.status(200).send({ message: 'Enrollment count incremented' });
+            } else {
+                res.status(404).send({ message: 'Course not found or not updated' });
+            }
+        });
 
 
         app.post('/enrollment', async (req, res) => {
