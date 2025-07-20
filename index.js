@@ -31,6 +31,9 @@ async function run() {
         const userCollection = client.db('courcesDB').collection('users')
         const teacherCollection = client.db('courcesDB').collection('teachers')
         const courcesCollection = client.db('courcesDB').collection('cources');
+        const enrollmentCollection = client.db('courcesDB').collection('enrollment');
+        const assignmentCollection = client.db('courcesDB').collection('assignments');
+        const submittedAssignmentCollection = client.db('courcesDB').collection('submittedAssignment');
         app.get('/users', async (req, res) => {
             const email = req.query.email;
 
@@ -219,13 +222,30 @@ async function run() {
 
 
 
-        
+        app.post('/enrollment', async (req, res) => {
+            const enrollment = req.body;
+            const result = await enrollmentCollection.insertOne(enrollment);
+            res.send(result)
+        })
+
+        app.get('/enrollment', async (req, res) => {
+            var query = {};
+            if (req.query.email) {
+                query = {
+                    email: req.query.email
+                }
+            }
+
+            const result = await enrollmentCollection.find(query).toArray();
+            res.send(result)
+        })
+
 
 
 
         // stripe js payment api
         app.post('/create-payment-intent', async (req, res) => {
-            const amountInCent=req.body.amount
+            const amountInCent = req.body.amount
             try {
                 const paymentIntent = await stripe.paymentIntents.create({
                     amount: amountInCent, // amount in cents
