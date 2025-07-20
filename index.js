@@ -7,7 +7,7 @@ require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 app.use(cors());
 app.use(express.json())
-
+const stripe = require("stripe")(process.env.PAYMENT_GATEWAY_KEY);
 
 
 const uri =
@@ -133,11 +133,24 @@ async function run() {
         });
         app.get('/cources', async (req, res) => {
             const status = req.query.status;
-            const query = status ? { status } : {};
+            const email = req.query.email;
+            const query = {}
+
+
+            if (email) {
+                query.email = email;
+            }
+
+            if (status) {
+                query.status = status;
+            }
 
             const result = await courcesCollection.find(query).toArray();
             res.send(result);
         });
+
+
+
         app.get('/cources/:id', async (req, res) => {
             const id = req.params.id;
             const query = {
@@ -148,6 +161,19 @@ async function run() {
             res.send(result);
         });
 
+        app.patch('/cources/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedData = req.body;
+
+            const result = await courcesCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: updatedData }
+            );
+
+            res.send(result);
+        });
+
+
         app.delete('/cources/:id', async (req, res) => {
             const id = req.params.id;
             const query = {
@@ -157,13 +183,8 @@ async function run() {
             const result = await courcesCollection.deleteOne(query);
             res.send(result);
         });
-        app.get('/cources/:email', async (req, res) => {
-            const email = req.params.email;
 
 
-            const result = await courcesCollection.find(email).toArray();
-            res.send(result);
-        });
 
         // update cources status to approve
         app.patch('/cources/approve/:id', async (req, res) => {
@@ -195,6 +216,33 @@ async function run() {
                 res.status(500).send({ error: 'Failed to reject class.' });
             }
         });
+
+
+
+        
+
+
+
+        // stripe js payment api
+        app.post('/create-payment-intent', async (req, res) => {
+            const amountInCent=req.body.amount
+            try {
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount: amountInCent, // amount in cents
+                    currency: 'usd',
+                    automatic_payment_methods: {
+                        enabled: true,
+                    },
+                });
+
+                res.send({
+                    clientSecret: paymentIntent.client_secret,
+                });
+            } catch (error) {
+                res.status(400).send({ error: error.message });
+            }
+        });
+
 
     } finally {
 
