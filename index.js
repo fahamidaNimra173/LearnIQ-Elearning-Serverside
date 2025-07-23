@@ -270,7 +270,42 @@ async function run() {
             const result = await enrollmentCollection.find(query).toArray();
             res.send(result);
         });
+        //assignment post and get, find
+        app.post('/assignment', async (req, res) => {
+            const assignment = req.body;
+            const result = await assignmentCollection.insertOne(assignment);
+            res.send(result)
+        })
 
+        app.get('/assignment', async (req, res) => {
+            const courseId = req.params.id;
+            if (req.query.id) {
+                query = {
+                    _id: new ObjectId(courseId)
+                }
+            }
+
+            const result = await assignmentCollection.find(query).toArray();
+            res.send(result)
+        })
+        //to get and post submitted assignment
+         app.post('/submission', async (req, res) => {
+            const assignment = req.body;
+            const result = await assignmentCollection.insertOne(assignment);
+            res.send(result)
+        })
+
+        app.get('/submission', async (req, res) => {
+            const courseId = req.params.id;
+            if (req.query.id) {
+                query = {
+                    _id: new ObjectId(courseId)
+                }
+            }
+
+            const result = await submittedAssignmentCollection.find(query).toArray();
+            res.send(result)
+        })
 
 
 
