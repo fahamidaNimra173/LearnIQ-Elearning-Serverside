@@ -119,6 +119,23 @@ async function run() {
             res.send({ teacher, userUpdate });
         });
 
+        // updating the status from rejected to pending
+        app.patch('/teacher-request', async (req, res) => {
+            const { email } = req.query;
+            const updateDoc = {
+                $set: {
+                    status: req.body.status,
+                    title: req.body.title,
+                    experience: req.body.experience,
+                    category: req.body.category
+                }
+            };
+
+            const result = await teacherCollection.updateOne({ email }, updateDoc);
+            res.send(result);
+        });
+
+
         //  Reject request
         app.patch('/teacher-request/reject/:id', async (req, res) => {
             const id = req.params.id;
@@ -235,23 +252,27 @@ async function run() {
         });
 
 
+        // POST: Save new enrollment
         app.post('/enrollment', async (req, res) => {
             const enrollment = req.body;
             const result = await enrollmentCollection.insertOne(enrollment);
-            res.send(result)
-        })
+            res.send(result);
+        });
 
         app.get('/enrollment', async (req, res) => {
-            var query = {};
-            if (req.query.email) {
+            let query = {};
+            if (req.query.studentEmail) {
                 query = {
-                    email: req.query.email
-                }
+                    studentEmail: req.query.studentEmail
+                };
             }
 
             const result = await enrollmentCollection.find(query).toArray();
-            res.send(result)
-        })
+            res.send(result);
+        });
+
+
+
 
 
 
