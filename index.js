@@ -4,6 +4,7 @@ const app = express()
 const cors = require('cors')
 const port = process.env.PORT || 5000
 require('dotenv').config()
+const jwt = require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 app.use(cors());
 app.use(express.json())
@@ -28,12 +29,22 @@ async function run() {
             res.send('Hello World!')
         })
 
+        app.post('/jwt', async (req, res) => {
+            const { email } = req.body;
+            const user = { email }
+            const token = jwt.sign(user, 'secret', {
+                expiresIn: '1h'
+            });
+            res.send({ token })
+        })
+
         const userCollection = client.db('courcesDB').collection('users')
         const teacherCollection = client.db('courcesDB').collection('teachers')
         const courcesCollection = client.db('courcesDB').collection('cources');
         const enrollmentCollection = client.db('courcesDB').collection('enrollment');
         const assignmentCollection = client.db('courcesDB').collection('assignments');
         const submittedAssignmentCollection = client.db('courcesDB').collection('submittedAssignment');
+        const feedBackCollection = client.db('courcesDB').collection('feedBack');
         app.get('/users', async (req, res) => {
             const email = req.query.email;
 
@@ -51,7 +62,7 @@ async function run() {
 
 
         app.post('/users', async (req, res) => {
-            const userCollection = client.db('courcesDB').collection('users');
+
 
             const email = req.body.email;
 
@@ -73,17 +84,30 @@ async function run() {
             res.send(result);
         });
 
+        //  GET all users or search by email
         app.get('/users', async (req, res) => {
             const email = req.query.email;
-            if (!email) return res.status(400).send('Email required');
-            const query = {
-                userEmail: email
-            }
-            const user = await userCollection.findOne(query);
-            if (!user) return res.status(404).send('User not found');
 
-            res.send(user);
+            if (email) {
+                const user = await userCollection.findOne({ email }); // use 'email' not 'userEmail'
+                if (!user) return res.status(404).send('User not found');
+                return res.send([user]); // send as array for frontend consistency
+            }
+
+            const users = await userCollection.find().toArray();
+            res.send(users);
         });
+
+        //  PATCH to make a user admin
+        app.patch('/users/admin/:id', async (req, res) => {
+            const id = req.params.id;
+            const result = await userCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: { role: 'admin' } }
+            );
+            res.send(result);
+        });
+
         app.post('/teacher-request', async (req, res) => {
             const teacher = req.body;
             const result = await teacherCollection.insertOne(teacher);
@@ -278,37 +302,102 @@ async function run() {
         })
 
         app.get('/assignment', async (req, res) => {
-            const courseId = req.params.id;
-            if (req.query.id) {
-                query = {
-                    _id: new ObjectId(courseId)
-                }
-            }
+            let query = {}
 
-            const result = await assignmentCollection.find(query).toArray();
-            res.send(result)
-        })
+            const result = await assignmentCollection.find({}).toArray();
+            res.send(result);
+        });
+
+        app.get('/assignment/:id', async (req, res) => {
+            const courseId = req.params.id;
+
+            const result = await assignmentCollection.find({ courseId: courseId }).toArray();
+            res.send(result);
+        });
+
+
+        // PATCH: Increase totalAssignment only
+        app.patch('/cources/increment-assignment/:id', async (req, res) => {
+            const { id } = req.params;
+            const result = await courcesCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $inc: { totalAssignment: 1 } }
+            );
+            res.send(result);
+        });
+        // PATCH: Increase totalSubmission
+        app.patch('/cources/increment-submission/:id', async (req, res) => {
+            const { id } = req.params;
+            const result = await courcesCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $inc: { totalSubmission: 1 } }
+            );
+            res.send(result);
+        });
+
+
         //to get and post submitted assignment
-         app.post('/submission', async (req, res) => {
+        app.post('/submission', async (req, res) => {
             const assignment = req.body;
-            const result = await assignmentCollection.insertOne(assignment);
+            const result = await submittedAssignmentCollection.insertOne(assignment);
             res.send(result)
         })
 
         app.get('/submission', async (req, res) => {
-            const courseId = req.params.id;
-            if (req.query.id) {
-                query = {
-                    _id: new ObjectId(courseId)
-                }
+            const { email, assignmentId } = req.query;
+
+            let query = {};
+
+            if (email) {
+                query.userEmail = email;
+            }
+
+            if (assignmentId) {
+                query.assignmentId = assignmentId;
             }
 
             const result = await submittedAssignmentCollection.find(query).toArray();
+            res.send(result);
+        });
+
+
+
+        app.post('/feedback', async (req, res) => {
+            const feedBack = req.body;
+            const result = await feedBackCollection.insertOne(feedBack);
             res.send(result)
         })
 
+        app.get('/feedback', async (req, res) => {
+            const query = {};
+            const result = await feedBackCollection.find(query).toArray();
+            res.send(result)
+        })
+        // to get total datas of all collection
+        app.get('/counts', async (req, res) => {
+            try {
+                const userCount = await userCollection.estimatedDocumentCount();
+                const teacherCount = await teacherCollection.estimatedDocumentCount();
+                const courseCount = await courcesCollection.estimatedDocumentCount();
+                const enrollmentCount = await enrollmentCollection.estimatedDocumentCount();
+                const assignmentCount = await assignmentCollection.estimatedDocumentCount();
+                const submittedAssignmentCount = await submittedAssignmentCollection.estimatedDocumentCount();
+                const feedbackCount = await feedBackCollection.estimatedDocumentCount();
 
-
+                res.send({
+                    users: userCount,
+                    teachers: teacherCount,
+                    courses: courseCount,
+                    enrollments: enrollmentCount,
+                    assignments: assignmentCount,
+                    submittedAssignments: submittedAssignmentCount,
+                    feedbacks: feedbackCount,
+                });
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ error: 'Failed to get counts' });
+            }
+        });
 
 
 
