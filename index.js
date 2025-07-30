@@ -24,7 +24,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
 
-        await client.connect();
+        // await client.connect();
         app.get('/', (req, res) => {
             res.send('Hello World!')
         })
@@ -89,14 +89,22 @@ async function run() {
             const email = req.query.email;
 
             if (email) {
-                const user = await userCollection.findOne({ email }); // use 'email' not 'userEmail'
-                if (!user) return res.status(404).send('User not found');
-                return res.send([user]); // send as array for frontend consistency
+                // Use regex for case-insensitive partial match on email or name
+                const users = await userCollection.find({
+                    $or: [
+                        { email: { $regex: email, $options: 'i' } },
+                        { name: { $regex: email, $options: 'i' } }
+                    ]
+                }).toArray();
+
+                if (!users.length) return res.status(404).send('No users found');
+                return res.send(users); // always return an array
             }
 
             const users = await userCollection.find().toArray();
             res.send(users);
         });
+
 
         //  PATCH to make a user admin
         app.patch('/users/admin/:id', async (req, res) => {
@@ -193,6 +201,19 @@ async function run() {
             res.send(result);
         });
 
+        // GET: Sorted and approved courses by total enrollment (ascending)
+        app.get('/sorted-courses', async (req, res) => {
+            try {
+                const sortedCourses = await courcesCollection
+                    .find({ status: 'approved' })
+                    .sort({ totalEnroll: -1 })
+                    .toArray();
+
+                res.send(sortedCourses);
+            } catch (error) {
+                res.status(500).send({ error: 'Failed to fetch sorted approved courses' });
+            }
+        });
 
 
         app.get('/cources/:id', async (req, res) => {
@@ -333,6 +354,21 @@ async function run() {
                 { $inc: { totalSubmission: 1 } }
             );
             res.send(result);
+        });
+        app.patch('/cources/update-assignment/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedFields = req.body;
+
+            const result = await courcesCollection.updateOne(
+                { _id: new ObjectId(id) },
+                { $set: updatedFields }
+            );
+
+            if (result.modifiedCount === 0) {
+                return res.status(404).send({ message: 'Course not found or no update made.' });
+            }
+
+            res.send({ message: 'Assignment updated successfully', result });
         });
 
 
