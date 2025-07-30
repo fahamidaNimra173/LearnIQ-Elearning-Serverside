@@ -45,20 +45,22 @@ async function run() {
         const assignmentCollection = client.db('courcesDB').collection('assignments');
         const submittedAssignmentCollection = client.db('courcesDB').collection('submittedAssignment');
         const feedBackCollection = client.db('courcesDB').collection('feedBack');
-        app.get('/users', async (req, res) => {
-            const email = req.query.email;
 
-            if (email) {
-                // Find specific user by email
-                const user = await userCollection.findOne({ email });
-                if (!user) return res.status(404).send('User not found');
-                return res.send(user);
-            }
 
-            // If no email is provided, return all users
-            const allUsers = await userCollection.find({}).toArray();
-            res.status(200).send(allUsers);
-        });
+        // app.get('/users', async (req, res) => {
+        //     const email = req.query.email;
+
+        //     if (email) {
+        //         // Find specific user by email
+        //         const user = await userCollection.findOne({ email });
+        //         if (!user) return res.status(404).send('User not found');
+        //         return res.send(user);
+        //     }
+
+        //     // If no email is provided, return all users
+        //     const allUsers = await userCollection.find({}).toArray();
+        //     res.status(200).send(allUsers);
+        // });
 
 
         app.post('/users', async (req, res) => {
@@ -83,30 +85,93 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.send(result);
         });
+        app.get('/users/me', async (req, res) => {
+            const email = req.query.email;
+            if (!email) return res.status(400).send({ error: 'Email is required' });
 
+            const user = await userCollection.findOne({ email });
+            if (!user) return res.status(404).send({ error: 'User not found' });
+
+            res.send(user);
+        });
         //  GET all users or search by email
+        function escapeRegex(text) {
+            return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+        }
         app.get('/users', async (req, res) => {
             const email = req.query.email;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const skip = (page - 1) * limit;
 
-            if (email) {
-                // Use regex for case-insensitive partial match on email or name
-                const users = await userCollection.find({
-                    $or: [
-                        { email: { $regex: email, $options: 'i' } },
-                        { name: { $regex: email, $options: 'i' } }
-                    ]
-                }).toArray();
-
-                if (!users.length) return res.status(404).send('No users found');
-                return res.send(users); // always return an array
+            function escapeRegex(text) {
+                return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
             }
 
-            const users = await userCollection.find().toArray();
-            res.send(users);
+            let query = {};
+
+            if (email) {
+                const escapedEmail = escapeRegex(email);
+                const regex = new RegExp('^' + escapedEmail, 'i');
+                query = {
+                    $or: [
+                        { email: { $regex: regex } },
+                        { name: { $regex: regex } }
+                    ]
+                };
+            }
+
+            try {
+                const total = await userCollection.countDocuments(query); // ✅ total count
+                const users = await userCollection
+                    .find(query)
+                    .skip(skip)
+                    .limit(limit)
+                    .toArray();
+
+                res.send({
+                    total,
+                    page,
+                    limit,
+                    users
+                });
+            } catch (error) {
+                res.status(500).send({ error: 'Failed to fetch users' });
+            }
         });
 
 
+        // app.get('/users', async (req, res) => {
+        //     const email = req.query.email;
+
+        //     if (email) {
+        //         const escapedEmail = escapeRegex(email);
+        //         const regex = new RegExp('^' + escapedEmail, 'i');  // <-- starts with, case-insensitive
+
+        //         const users = await userCollection.find({
+        //             $or: [
+        //                 { email: { $regex: regex } },
+        //                 { name: { $regex: regex } }
+        //             ]
+        //         }).toArray();
+
+        //         console.log('Searching for:', escapedEmail);
+
+        //         if (!users.length) return res.status(404).send('No users found');
+        //         return res.send(users);
+        //     }
+
+        //     const users = await userCollection.find().toArray();
+        //     res.send(users);
+        // });
+
+
+
+
+
         //  PATCH to make a user admin
+
+
         app.patch('/users/admin/:id', async (req, res) => {
             const id = req.params.id;
             const result = await userCollection.updateOne(
