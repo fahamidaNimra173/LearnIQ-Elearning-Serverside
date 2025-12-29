@@ -45,7 +45,7 @@ async function run() {
         const assignmentCollection = client.db('courcesDB').collection('assignments');
         const submittedAssignmentCollection = client.db('courcesDB').collection('submittedAssignment');
         const feedBackCollection = client.db('courcesDB').collection('feedBack');
-
+        const freeCourseMix=client.db('courcesDB').collection('freeCourseMix')
 
         // app.get('/users', async (req, res) => {
         //     const email = req.query.email;
@@ -91,6 +91,14 @@ async function run() {
 
             const user = await userCollection.findOne({ email });
             if (!user) return res.status(404).send({ error: 'User not found' });
+
+            res.send(user);
+        });
+         app.get('/allUser', async (req, res) => {
+           
+            
+            const user = await userCollection.find().toArray();
+            
 
             res.send(user);
         });
@@ -360,7 +368,11 @@ async function run() {
                 res.status(404).send({ message: 'Course not found or not updated' });
             }
         });
-
+        //API's for free courses
+        app.get('/freeCourseMix', async(req,res)=>{
+            const result=await freeCourseMix.find().toArray();
+            res.send(result)
+        })
 
         // POST: Save new enrollment
         app.post('/enrollment', async (req, res) => {
@@ -420,21 +432,21 @@ async function run() {
             );
             res.send(result);
         });
-        app.patch('/cources/update-assignment/:id', async (req, res) => {
-            const id = req.params.id;
-            const updatedFields = req.body;
+        // app.patch('/cources/update-assignment/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     const updatedFields = req.body;
 
-            const result = await courcesCollection.updateOne(
-                { _id: new ObjectId(id) },
-                { $set: updatedFields }
-            );
+        //     const result = await courcesCollection.updateOne(
+        //         { _id: new ObjectId(id) },
+        //         { $set: updatedFields }
+        //     );
 
-            if (result.modifiedCount === 0) {
-                return res.status(404).send({ message: 'Course not found or no update made.' });
-            }
+        //     if (result.modifiedCount === 0) {
+        //         return res.status(404).send({ message: 'Course not found or no update made.' });
+        //     }
 
-            res.send({ message: 'Assignment updated successfully', result });
-        });
+        //     res.send({ message: 'Assignment updated successfully', result });
+        // });
 
 
         //to get and post submitted assignment
