@@ -49,20 +49,7 @@ async function run() {
         const freeCourseEDX = client.db('courcesDB').collection('edx');
         const freeCourseUdemy = client.db('courcesDB').collection('udemyIT&SoftwareFree')
 
-        // app.get('/users', async (req, res) => {
-        //     const email = req.query.email;
-
-        //     if (email) {
-        //         // Find specific user by email
-        //         const user = await userCollection.findOne({ email });
-        //         if (!user) return res.status(404).send('User not found');
-        //         return res.send(user);
-        //     }
-
-        //     // If no email is provided, return all users
-        //     const allUsers = await userCollection.find({}).toArray();
-        //     res.status(200).send(allUsers);
-        // });
+ 
 
 
         app.post('/users', async (req, res) => {
@@ -370,21 +357,35 @@ async function run() {
 
 
         //API's for free courses
-        //free courses from 10 min school,ostad,alison
-        app.get('/freeCourseMix', async (req, res) => {
-            const result = await freeCourseMix.find().toArray();
-            res.send(result)
+        //instead of creating 3 different api , i will marge them in one to simplkifiled pagination and filtering
+
+        app.get('/freeCourses', async(req,res)=>{
+            const[mix,edx,udemy]=await Promise.all([
+                freeCourseMix.find().toArray(),
+                freeCourseEDX.find().toArray(),
+                freeCourseUdemy.find().toArray()
+            ])
+            const freeCourses=[...mix,...edx,...udemy];
+            res.send(freeCourses)
         })
-        //free courses from EDX
-        app.get('/freeCourseEDX', async (req, res) => {
-            const result = await freeCourseEDX.find().toArray();
-            res.send(result)
-        })
-        //free courses from Udemy
-        app.get('/freeCourseUdemy', async (req, res) => {
-            const result = await freeCourseUdemy.find().toArray();
-            res.send(result)
-        })
+
+
+
+        // //free courses from 10 min school,ostad,alison
+        // app.get('/freeCourseMix', async (req, res) => {
+        //     const result = await freeCourseMix.find().toArray();
+        //     res.send(result)
+        // })
+        // //free courses from EDX
+        // app.get('/freeCourseEDX', async (req, res) => {
+        //     const result = await freeCourseEDX.find().toArray();
+        //     res.send(result)
+        // })
+        // //free courses from Udemy
+        // app.get('/freeCourseUdemy', async (req, res) => {
+        //     const result = await freeCourseUdemy.find().toArray();
+        //     res.send(result)
+        // })
 
 
 
