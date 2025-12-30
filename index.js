@@ -45,9 +45,9 @@ async function run() {
         const assignmentCollection = client.db('courcesDB').collection('assignments');
         const submittedAssignmentCollection = client.db('courcesDB').collection('submittedAssignment');
         const feedBackCollection = client.db('courcesDB').collection('feedBack');
-        const freeCourseMix=client.db('courcesDB').collection('freeCourseMix');
-        const freeCourseEDX=client.db('courcesDB').collection('edx');
-        const freeCourseUdemy=client.db('courcesDB').collection('udemyIT&SoftwareFree')
+        const freeCourseMix = client.db('courcesDB').collection('freeCourseMix');
+        const freeCourseEDX = client.db('courcesDB').collection('edx');
+        const freeCourseUdemy = client.db('courcesDB').collection('udemyIT&SoftwareFree')
 
         // app.get('/users', async (req, res) => {
         //     const email = req.query.email;
@@ -67,10 +67,7 @@ async function run() {
 
         app.post('/users', async (req, res) => {
 
-
             const email = req.body.email;
-
-
             const userExists = await userCollection.findOne({ email });
             if (userExists) {
                 //  update lastLogin of user
@@ -96,11 +93,11 @@ async function run() {
 
             res.send(user);
         });
-         app.get('/allUser', async (req, res) => {
-           
-            
+        app.get('/allUser', async (req, res) => {
+
+
             const user = await userCollection.find().toArray();
-            
+
 
             res.send(user);
         });
@@ -370,11 +367,20 @@ async function run() {
                 res.status(404).send({ message: 'Course not found or not updated' });
             }
         });
+
+
         //API's for free courses
-        app.get('/freeCourseMix', async(req,res)=>{
-            const result=await freeCourseMix.find().toArray();
+        app.get('/freeCourseMix', async (req, res) => {
+            const result = await freeCourseMix.find().toArray();
             res.send(result)
         })
+        app.get('/freeCourseEDX', async (req, res) => {
+            const result = await freeCourseEDX.find().toArray();
+            res.send(result)
+        })
+
+
+
 
         // POST: Save new enrollment
         app.post('/enrollment', async (req, res) => {
