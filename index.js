@@ -370,12 +370,19 @@ async function run() {
 
 
         //API's for free courses
+        //free courses from 10 min school,ostad,alison
         app.get('/freeCourseMix', async (req, res) => {
             const result = await freeCourseMix.find().toArray();
             res.send(result)
         })
+        //free courses from EDX
         app.get('/freeCourseEDX', async (req, res) => {
             const result = await freeCourseEDX.find().toArray();
+            res.send(result)
+        })
+        //free courses from Udemy
+        app.get('/freeCourseUdemy', async (req, res) => {
+            const result = await freeCourseUdemy.find().toArray();
             res.send(result)
         })
 
