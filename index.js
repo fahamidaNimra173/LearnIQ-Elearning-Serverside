@@ -45,7 +45,9 @@ async function run() {
         const assignmentCollection = client.db('courcesDB').collection('assignments');
         const submittedAssignmentCollection = client.db('courcesDB').collection('submittedAssignment');
         const feedBackCollection = client.db('courcesDB').collection('feedBack');
-        const freeCourseMix=client.db('courcesDB').collection('freeCourseMix')
+        const freeCourseMix=client.db('courcesDB').collection('freeCourseMix');
+        const freeCourseEDX=client.db('courcesDB').collection('edx');
+        const freeCourseUdemy=client.db('courcesDB').collection('udemyIT&SoftwareFree')
 
         // app.get('/users', async (req, res) => {
         //     const email = req.query.email;
