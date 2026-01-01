@@ -360,10 +360,23 @@ async function run() {
         //instead of creating 3 different api , i will marge them in one to simplkifiled pagination and filtering
 
         app.get('/freeCourses', async(req,res)=>{
+            const{category,language,platform}=req.query
+            const filter={};
+            if(category){
+                filter.category=category
+            }
+            if(language){
+                filter.language=language
+            }
+            if(platform){
+                filter.platform=platform
+            }
+
+
             const[mix,edx,udemy]=await Promise.all([
-                freeCourseMix.find().toArray(),
-                freeCourseEDX.find().toArray(),
-                freeCourseUdemy.find().toArray()
+                freeCourseMix.find(filter).toArray(),
+                freeCourseEDX.find(filter).toArray(),
+                freeCourseUdemy.find(filter).toArray()
             ])
             const freeCourses=[...mix,...edx,...udemy];
             res.send(freeCourses)
