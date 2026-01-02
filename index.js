@@ -49,7 +49,7 @@ async function run() {
         const freeCourseEDX = client.db('courcesDB').collection('edx');
         const freeCourseUdemy = client.db('courcesDB').collection('udemyIT&SoftwareFree')
 
- 
+
 
 
         app.post('/users', async (req, res) => {
@@ -359,28 +359,44 @@ async function run() {
         //API's for free courses
         //instead of creating 3 different api , i will marge them in one to simplkifiled pagination and filtering
 
-        app.get('/freeCourses', async(req,res)=>{
-            const{category,language,platform}=req.query
-            const filter={};
-            if(category){
-                filter.category=category
+        app.get('/freeCourses', async (req, res) => {
+            const { category, language, platform } = req.query
+            const filter = {};
+            if (category) {
+                filter.category = category
             }
-            if(language){
-                filter.language=language
+            if (language) {
+                filter.language = language
             }
-            if(platform){
-                filter.platform=platform
+            if (platform) {
+                filter.platform = platform
             }
 
 
-            const[mix,edx,udemy]=await Promise.all([
+            const [mix, edx, udemy] = await Promise.all([
                 freeCourseMix.find(filter).toArray(),
                 freeCourseEDX.find(filter).toArray(),
                 freeCourseUdemy.find(filter).toArray()
             ])
-            const freeCourses=[...mix,...edx,...udemy];
+            const freeCourses = [...mix, ...edx, ...udemy];
             res.send(freeCourses)
         })
+        //This API is for getiing all filters ex:category,language,courses
+        app.get('/freeCourses/filters', async (req, res) => {
+            const [mix, edx, udemy] = await Promise.all([
+                freeCourseMix.find(filter).toArray(),
+                freeCourseEDX.find(filter).toArray(),
+                freeCourseUdemy.find(filter).toArray()
+            ])
+            const freeCourses = [...mix, ...edx, ...udemy];
+            const categories = [...new Set(freeCourses.map((cat) => { cat.category }))];
+            const language = [...new Set(freeCourses.map((lan) => { lan.language }))];
+            const platform = [...new Set(freeCourses.map((p) => { p.platform }))];
+            res.send({
+                categories,language,platform
+            })
+        })
+
 
 
 
