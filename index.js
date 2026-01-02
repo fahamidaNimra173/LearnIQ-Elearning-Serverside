@@ -384,14 +384,14 @@ async function run() {
         //This API is for getiing all filters ex:category,language,courses
         app.get('/freeCourses/filters', async (req, res) => {
             const [mix, edx, udemy] = await Promise.all([
-                freeCourseMix.find(filter).toArray(),
-                freeCourseEDX.find(filter).toArray(),
-                freeCourseUdemy.find(filter).toArray()
+                freeCourseMix.find().toArray(),
+                freeCourseEDX.find().toArray(),
+                freeCourseUdemy.find().toArray()
             ])
             const freeCourses = [...mix, ...edx, ...udemy];
-            const categories = [...new Set(freeCourses.map((cat) => { cat.category }))];
-            const language = [...new Set(freeCourses.map((lan) => { lan.language }))];
-            const platform = [...new Set(freeCourses.map((p) => { p.platform }))];
+            const categories = [...new Set(freeCourses.map(cat => cat.category ))];
+            const language = [...new Set(freeCourses.map(lan =>  lan.language ))];
+            const platform = [...new Set(freeCourses.map(p =>  p.platform ))];
             res.send({
                 categories,language,platform
             })
