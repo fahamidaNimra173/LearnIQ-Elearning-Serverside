@@ -362,7 +362,7 @@ async function run() {
         app.get('/freeCourses', async (req, res) => {
             const { category, language, platform } = req.query;
             const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 10;
+            const limit = parseInt(req.query.limit) || 9;
             const skip = (page - 1) * limit;
             const filter = {};
             if (category) {
@@ -385,6 +385,7 @@ async function run() {
             const paginatedCourses = freeCourses.slice(skip, skip + limit)
             const total = freeCourses.length
             const totalPage = Math.ceil(total / limit);
+            console.log(totalPage)
             const hasNextPage = page < totalPage;
             const hasPrevPage = page > 1;
 
@@ -393,7 +394,7 @@ async function run() {
                 pagination: {
                     currentPage: page,
                     totalPages: totalPage,
-                    totalItems: totalCourses,
+                    totalItems: total,
                     itemsPerPage: limit,
                     hasNextPage: hasNextPage,
                     hasPrevPage: hasPrevPage
