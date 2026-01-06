@@ -360,7 +360,10 @@ async function run() {
         //instead of creating 3 different api , i will marge them in one to simplkifiled pagination and filtering
 
         app.get('/freeCourses', async (req, res) => {
-            const { category, language, platform } = req.query
+            const { category, language, platform } = req.query;
+            const page=parseInt(req.query.page)||1;
+            const limit=parseInt(req.query.limit)||10;
+            const skip=(page-1)*limit;
             const filter = {};
             if (category) {
                 filter.category = category
@@ -374,12 +377,15 @@ async function run() {
 
 
             const [mix, edx, udemy] = await Promise.all([
-                freeCourseMix.find(filter).toArray(),
-                freeCourseEDX.find(filter).toArray(),
-                freeCourseUdemy.find(filter).toArray()
+                freeCourseMix.find(filter).skip(skip).limit(limit).toArray(),
+                freeCourseEDX.find(filter).skip(skip).limit(limit).toArray(),
+                freeCourseUdemy.find(filter).skip(skip).limit(limit).toArray()
             ])
             const freeCourses = [...mix, ...edx, ...udemy];
-            res.send(freeCourses)
+            const total=freeCourses.length
+            const totalPage=Math.ceil(total/limit);
+            
+            res.send(freeCourses,totalPage)
         })
         //This API is for getiing all filters ex:category,language,courses
         app.get('/freeCourses/filters', async (req, res) => {
@@ -389,11 +395,11 @@ async function run() {
                 freeCourseUdemy.find().toArray()
             ])
             const freeCourses = [...mix, ...edx, ...udemy];
-            const categories = [...new Set(freeCourses.map(cat => cat.category ))];
-            const language = [...new Set(freeCourses.map(lan =>  lan.language ))];
-            const platform = [...new Set(freeCourses.map(p =>  p.platform ))];
+            const categories = [...new Set(freeCourses.map(cat => cat.category))];
+            const language = [...new Set(freeCourses.map(lan => lan.language))];
+            const platform = [...new Set(freeCourses.map(p => p.platform))];
             res.send({
-                categories,language,platform
+                categories, language, platform
             })
         })
 
@@ -477,21 +483,7 @@ async function run() {
             );
             res.send(result);
         });
-        // app.patch('/cources/update-assignment/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     const updatedFields = req.body;
 
-        //     const result = await courcesCollection.updateOne(
-        //         { _id: new ObjectId(id) },
-        //         { $set: updatedFields }
-        //     );
-
-        //     if (result.modifiedCount === 0) {
-        //         return res.status(404).send({ message: 'Course not found or no update made.' });
-        //     }
-
-        //     res.send({ message: 'Assignment updated successfully', result });
-        // });
 
 
         //to get and post submitted assignment
@@ -531,6 +523,7 @@ async function run() {
             const result = await feedBackCollection.find(query).toArray();
             res.send(result)
         })
+
         // to get total datas of all collection
         app.get('/counts', async (req, res) => {
             try {
@@ -541,7 +534,10 @@ async function run() {
                 const assignmentCount = await assignmentCollection.estimatedDocumentCount();
                 const submittedAssignmentCount = await submittedAssignmentCollection.estimatedDocumentCount();
                 const feedbackCount = await feedBackCollection.estimatedDocumentCount();
-
+                const freeCourseMixCount = await freeCourseMix.estimatedDocumentCount();
+                const freeCourseEDXCount=await freeCourseEDX.estimatedDocumentCount();
+                const freeCourseUdemyCount=await freeCourseUdemy.estimatedDocumentCount();
+                
                 res.send({
                     users: userCount,
                     teachers: teacherCount,
@@ -550,7 +546,9 @@ async function run() {
                     assignments: assignmentCount,
                     submittedAssignments: submittedAssignmentCount,
                     feedbacks: feedbackCount,
+                    freeCourses:freeCourseEDXCount+freeCourseMixCount+freeCourseUdemyCount
                 });
+
             } catch (error) {
                 console.error(error);
                 res.status(500).send({ error: 'Failed to get counts' });
