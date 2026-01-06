@@ -361,9 +361,9 @@ async function run() {
 
         app.get('/freeCourses', async (req, res) => {
             const { category, language, platform } = req.query;
-            const page=parseInt(req.query.page)||1;
-            const limit=parseInt(req.query.limit)||10;
-            const skip=(page-1)*limit;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const skip = (page - 1) * limit;
             const filter = {};
             if (category) {
                 filter.category = category
@@ -377,15 +377,28 @@ async function run() {
 
 
             const [mix, edx, udemy] = await Promise.all([
-                freeCourseMix.find(filter).skip(skip).limit(limit).toArray(),
-                freeCourseEDX.find(filter).skip(skip).limit(limit).toArray(),
-                freeCourseUdemy.find(filter).skip(skip).limit(limit).toArray()
+                freeCourseMix.find(filter).toArray(),
+                freeCourseEDX.find(filter).toArray(),
+                freeCourseUdemy.find(filter).toArray()
             ])
             const freeCourses = [...mix, ...edx, ...udemy];
-            const total=freeCourses.length
-            const totalPage=Math.ceil(total/limit);
-            
-            res.send(freeCourses,totalPage)
+            const paginatedCourses = freeCourses.slice(skip, skip + limit)
+            const total = freeCourses.length
+            const totalPage = Math.ceil(total / limit);
+            const hasNextPage = page < totalPage;
+            const hasPrevPage = page > 1;
+
+            res.send({
+                data: paginatedCourses,
+                pagination: {
+                    currentPage: page,
+                    totalPages: totalPage,
+                    totalItems: totalCourses,
+                    itemsPerPage: limit,
+                    hasNextPage: hasNextPage,
+                    hasPrevPage: hasPrevPage
+                }
+            });
         })
         //This API is for getiing all filters ex:category,language,courses
         app.get('/freeCourses/filters', async (req, res) => {
@@ -535,9 +548,9 @@ async function run() {
                 const submittedAssignmentCount = await submittedAssignmentCollection.estimatedDocumentCount();
                 const feedbackCount = await feedBackCollection.estimatedDocumentCount();
                 const freeCourseMixCount = await freeCourseMix.estimatedDocumentCount();
-                const freeCourseEDXCount=await freeCourseEDX.estimatedDocumentCount();
-                const freeCourseUdemyCount=await freeCourseUdemy.estimatedDocumentCount();
-                
+                const freeCourseEDXCount = await freeCourseEDX.estimatedDocumentCount();
+                const freeCourseUdemyCount = await freeCourseUdemy.estimatedDocumentCount();
+
                 res.send({
                     users: userCount,
                     teachers: teacherCount,
@@ -546,7 +559,7 @@ async function run() {
                     assignments: assignmentCount,
                     submittedAssignments: submittedAssignmentCount,
                     feedbacks: feedbackCount,
-                    freeCourses:freeCourseEDXCount+freeCourseMixCount+freeCourseUdemyCount
+                    freeCourses: freeCourseEDXCount + freeCourseMixCount + freeCourseUdemyCount
                 });
 
             } catch (error) {
