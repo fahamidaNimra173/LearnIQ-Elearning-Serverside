@@ -416,8 +416,22 @@ async function run() {
                 categories, language, platform
             })
         })
+        //sorted free Courses
+        app.get('/freeCourses/enrollmentSorted', async (req, res) => {
+            
 
 
+            const [mix, edx, udemy] = await Promise.all([
+                freeCourseMix.find().toArray(),
+                freeCourseEDX.find().toArray(),
+                freeCourseUdemy.find().toArray()
+            ])
+            const freeCourses = [...mix, ...edx, ...udemy];
+            freeCourses.sort((a,b)=>(b.Enrollment||0)-(a.Enrollment||0))
+       
+
+            res.send(freeCourses);
+        })
 
 
         // //free courses from 10 min school,ostad,alison
